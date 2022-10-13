@@ -14,6 +14,7 @@ class Field:
     def __get__(self, instance, owner):
         keep_logger.info("__get__(%s, %s, %s)", self, instance, owner)
         if instance is None:
+            keep_logger.info("instance is None, return self")
             return self
         return getattr(instance, self.internal_name)
 
@@ -32,3 +33,5 @@ if __name__ == "__main__":
     model.name = "Felix"
     model.birthday = "1987"
     keep_logger.info("%s", model.__dict__)
+    keep_logger.info("%s", model.name)
+    keep_logger.info("%s", Model.name)
