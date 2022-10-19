@@ -1,2 +1,4 @@
+attrs==22.1.0
 jupyterlab==3.4.8
 pre-commit==2.20.0
+pydantic==1.10.2
