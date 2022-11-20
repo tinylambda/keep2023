@@ -1,4 +1,5 @@
 import xml.etree.ElementTree
+from math import radians, sqrt, sin, cos, asin
 from pathlib import Path
 from typing import TextIO, Text, List, Iterable, Tuple, Any, Iterator, TypeVar
 
@@ -11,8 +12,17 @@ Rows = Iterable[List[Text]]
 LL_Text = Tuple[Text, Text]
 Item_Iter = Iterator[Any]
 
+Text_Iter = Iterable[Tuple[Text, Text]]
+LL_Iter = Iterable[Tuple[float, float]]
+
 T_ = TypeVar("T_")
 Pairs_Iter = Iterator[Tuple[T_, T_]]
+
+Point = Tuple[float, float]
+
+MI = 3959
+NM = 3440
+KM = 6371
 
 
 def comma_split(text: Text) -> List[Text]:
@@ -59,12 +69,36 @@ def legs(lat_lon_iter: Iterator[T_]) -> Pairs_Iter:
         begin = end
 
 
+def float_from_pair(lat_lon_iter: Text_Iter) -> LL_Iter:
+    return ((float(lat), float(lon)) for lat, lon in lat_lon_iter)
+
+
+def haversine(p1: Point, p2: Point, R: float = NM) -> float:
+    lat_1, lon_1 = p1
+    lat_2, lon_2 = p2
+    delta_lat = radians(lat_2 - lat_1)
+    delta_lon = radians(lon_2 - lon_1)
+    lat_1 = radians(lat_1)
+    lat_2 = radians(lat_2)
+    a = sqrt(
+        sin(delta_lat / 2) ** 2 + cos(lat_1) * cos(lat_2) * sin(delta_lon / 2) ** 2
+    )
+    c = 2 * asin(a)
+    return R * c
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
-        v1 = tuple(lat_lon_kml(row_iter_kml(geo_file_obj)))
-        keep_logger.info("%s", v1)
+        trip = (
+            (start, end, round(haversine(start, end), 4))
+            for start, end in legs(
+                float_from_pair(lat_lon_kml(row_iter_kml(geo_file_obj)))
+            )
+        )
+        for start, end, dist in trip:
+            keep_logger.info("%s, %s, %s", start, end, dist)
 
-    points = [1.0, 2.0, 2.1, 2.3, 1.2, 2.3, 3.0]
-    for item in legs(iter(points)):
-        keep_logger.info("%s", item)
+    # points = [1.0, 2.0, 2.1, 2.3, 1.2, 2.3, 3.0]
+    # for item in legs(iter(points)):
+    #     keep_logger.info("%s", item)
