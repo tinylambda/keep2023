@@ -1,3 +1,4 @@
+import itertools
 from typing import TypeVar, Sequence, Tuple, List, Iterator
 
 from base import keep_logger
@@ -58,3 +59,9 @@ with open("data/1000.txt") as raw_file:
 
     group_iter = group_by_iter(7, iter(flatten_list))
     keep_logger.info("use group_by_iter: %s", list(group_iter))
+
+    n = 7
+    keep_logger.info(
+        "use slice: %s",
+        list(itertools.zip_longest(*(flatten_list[i::n] for i in range(n)))),
+    )
