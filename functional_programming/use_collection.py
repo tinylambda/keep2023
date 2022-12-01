@@ -96,9 +96,18 @@ if __name__ == "__main__":
                 float_from_pair(lat_lon_kml(row_iter_kml(geo_file_obj)))
             )
         )
-        for start, end, dist in trip:
+        trip_tuple = tuple(trip)
+        for start, end, dist in trip_tuple:
             keep_logger.info("%s, %s, %s", start, end, dist)
 
-    # points = [1.0, 2.0, 2.1, 2.3, 1.2, 2.3, 3.0]
-    # for item in legs(iter(points)):
-    #     keep_logger.info("%s", item)
+        # points = [1.0, 2.0, 2.1, 2.3, 1.2, 2.3, 3.0]
+        # for item in legs(iter(points)):
+        #     keep_logger.info("%s", item)
+
+        def by_dist(leg: Tuple[Any, Any, Any]) -> Any:
+            lat, lon, _dist = leg
+            return _dist
+
+        long = max(trip_tuple, key=by_dist)
+        short = min(trip_tuple, key=by_dist)
+        keep_logger.info("long: %s, short: %s", long, short)
