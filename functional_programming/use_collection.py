@@ -87,6 +87,22 @@ def haversine(p1: Point, p2: Point, R: float = NM) -> float:
     return R * c
 
 
+def f_start(x):
+    return x[0]
+
+
+def f_end(x):
+    return x[1]
+
+
+def f_dist(x):
+    return x[2]
+
+
+def to_miles(x):
+    return f_start(x), f_end(x), f_dist(x)
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
@@ -111,3 +127,5 @@ if __name__ == "__main__":
         long = max(trip_tuple, key=by_dist)
         short = min(trip_tuple, key=by_dist)
         keep_logger.info("long: %s, short: %s", long, short)
+
+        keep_logger.info("trip_m: %s", list(map(to_miles, trip_tuple)))
