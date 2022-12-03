@@ -129,3 +129,6 @@ if __name__ == "__main__":
         keep_logger.info("long: %s, short: %s", long, short)
 
         keep_logger.info("trip_m: %s", list(map(to_miles, trip_tuple)))
+
+        trip_long = list(filter(lambda leg: f_dist(leg) >= 50, trip_tuple))
+        keep_logger.info("trip_long: %s", trip_long)
