@@ -1,7 +1,7 @@
 import xml.etree.ElementTree
 from math import radians, sqrt, sin, cos, asin
 from pathlib import Path
-from typing import TextIO, Text, List, Iterable, Tuple, Any, Iterator, TypeVar
+from typing import TextIO, Text, List, Iterable, Tuple, Any, Iterator, TypeVar, Callable
 
 from base import keep_logger
 
@@ -19,6 +19,9 @@ T_ = TypeVar("T_")
 Pairs_Iter = Iterator[Tuple[T_, T_]]
 
 Point = Tuple[float, float]
+
+Conv_F = Callable[[float], float]
+Leg = Tuple[Any, Any, float]
 
 MI = 3959
 NM = 3440
@@ -100,7 +103,19 @@ def f_dist(x):
 
 
 def to_miles(x):
-    return f_start(x), f_end(x), f_dist(x)
+    return x * 5280 / 6076.12
+
+
+def to_km(x):
+    return x * 1.852
+
+
+def to_nm(x):
+    return x
+
+
+def convert(conversion: Conv_F, _trip: Iterable[Leg]) -> Iterator[float]:
+    return (conversion(distance) for start, end, distance in _trip)
 
 
 if __name__ == "__main__":
@@ -128,7 +143,11 @@ if __name__ == "__main__":
         short = min(trip_tuple, key=by_dist)
         keep_logger.info("long: %s, short: %s", long, short)
 
-        keep_logger.info("trip_m: %s", list(map(to_miles, trip_tuple)))
+        keep_logger.info(
+            "trip_m: %s", list(map(to_miles, (f_dist(item) for item in trip_tuple)))
+        )
 
         trip_long = list(filter(lambda leg: f_dist(leg) >= 50, trip_tuple))
         keep_logger.info("trip_long: %s", trip_long)
+
+        keep_logger.info("convert: %s", list(convert(to_miles, trip_tuple)))
