@@ -19,6 +19,10 @@ T_ = TypeVar("T_")
 Pairs_Iter = Iterator[Tuple[T_, T_]]
 
 Point = Tuple[float, float]
+Leg_Raw = Tuple[Point, Point]
+Point_Func = Callable[[Point, Point], float]
+Leg_D = Tuple[Point, Point, float]
+Leg_P_D = Tuple[Leg_Raw, ...]
 
 Conv_F = Callable[[float], float]
 Leg = Tuple[Any, Any, float]
@@ -26,6 +30,18 @@ Leg = Tuple[Any, Any, float]
 MI = 3959
 NM = 3440
 KM = 6371
+
+
+def cons_distance(
+    distance: Point_Func, legs_iter: Iterable[Leg_Raw]
+) -> Iterator[Leg_D]:
+    return ((start, end, round(distance(start, end), 4)) for start, end in legs_iter)
+
+
+def cons_distance3(
+    distance: Point_Func, legs_iter: Iterable[Leg_Raw]
+) -> Iterator[Leg_P_D]:
+    return (leg + (round(distance(*leg), 4),) for leg in legs_iter)
 
 
 def comma_split(text: Text) -> List[Text]:
@@ -151,3 +167,13 @@ if __name__ == "__main__":
         keep_logger.info("trip_long: %s", trip_long)
 
         keep_logger.info("convert: %s", list(convert(to_miles, trip_tuple)))
+
+    with open(geo_xml, "r") as geo_file_obj:
+        path = float_from_pair(lat_lon_kml(row_iter_kml(geo_file_obj)))
+        trip2 = tuple(cons_distance(haversine, legs(path)))
+        keep_logger.info("trip2: %s", trip2)
+
+    with open(geo_xml, "r") as geo_file_obj:
+        path = float_from_pair(lat_lon_kml(row_iter_kml(geo_file_obj)))
+        trip3 = tuple(cons_distance3(haversine, legs(path)))
+        keep_logger.info("trip3: %s", trip3)
