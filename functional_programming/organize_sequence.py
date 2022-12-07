@@ -1,5 +1,6 @@
 import itertools
-from typing import TypeVar, Sequence, Tuple, List, Iterator
+from numbers import Number
+from typing import TypeVar, Sequence, Tuple, List, Iterator, Callable
 
 from base import keep_logger
 
@@ -9,6 +10,12 @@ Grouped = List[Tuple[ItemType, ...]]
 
 Flat_Iter = Iterator[ItemType]
 Grouped_Iter = Iterator[Tuple[ItemType, ...]]
+
+Num_Conv = Callable[[str], Number]
+
+
+def numbers_from_rows(conversion: Num_Conv, text: str) -> Iterator[Number]:
+    return (conversion(value) for line in text.splitlines() for value in line.split())
 
 
 def group_by_seq(n: int, sequence: Flat) -> Grouped:
@@ -65,3 +72,8 @@ with open("data/1000.txt") as raw_file:
         "use slice: %s",
         list(itertools.zip_longest(*(flatten_list[i::n] for i in range(n)))),
     )
+
+
+with open("data/1000.txt", "r") as raw_file:
+    text = raw_file.read()
+    keep_logger.info("%s", list(numbers_from_rows(float, text)))
