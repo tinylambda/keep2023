@@ -1,5 +1,5 @@
 import xml.etree.ElementTree
-from collections import Counter
+from collections import Counter, defaultdict
 from math import radians, sqrt, sin, cos, asin
 from pathlib import Path
 from typing import (
@@ -13,6 +13,7 @@ from typing import (
     TypeVar,
     Callable,
     Dict,
+    Sequence,
 )
 
 from base import keep_logger
@@ -38,6 +39,9 @@ Leg_P_D = Tuple[Leg_Raw, ...]
 
 Conv_F = Callable[[float], float]
 Leg = Tuple[Any, Any, float]
+
+S_ = TypeVar("S_")
+K_ = TypeVar("K_")
 
 MI = 3959
 NM = 3440
@@ -165,6 +169,25 @@ def group_sort1(trip: Iterable[Leg]) -> Dict[int, int]:
     return dict(group(quantized))
 
 
+def group_by(key: Callable[[S_], K_], data: Sequence[S_]) -> Dict[K_, List[S_]]:
+    def group_into(
+        key: Callable[[S_], K_],
+        collection: Sequence[S_],
+        dictionary: Dict[K_, List[S_]],
+    ):
+        if len(collection) == 0:
+            return dictionary
+        head, *tail = collection
+        dictionary[key(head)].append(head)
+        return group_into(key, tail, dictionary)
+
+    return group_into(key, data, defaultdict(list))
+
+
+def binned_distance(leg):
+    return 5 * (leg[2] // 5)
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
@@ -215,3 +238,9 @@ if __name__ == "__main__":
     keep_logger.info("use counter: %s", quantized_counter.most_common())
 
     keep_logger.info("use group_sort1: %s", group_sort1(trip_tuple))
+
+    by_distance = group_by(binned_distance, trip_tuple)
+    keep_logger.info("group_by <----")
+    for distance in sorted(by_distance):
+        keep_logger.info("%s: %s", distance, by_distance[distance])
+    keep_logger.info("group_by ---->")
