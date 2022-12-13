@@ -2,7 +2,18 @@ import xml.etree.ElementTree
 from collections import Counter
 from math import radians, sqrt, sin, cos, asin
 from pathlib import Path
-from typing import TextIO, Text, List, Iterable, Tuple, Any, Iterator, TypeVar, Callable
+from typing import (
+    TextIO,
+    Text,
+    List,
+    Iterable,
+    Tuple,
+    Any,
+    Iterator,
+    TypeVar,
+    Callable,
+    Dict,
+)
 
 from base import keep_logger
 
@@ -135,6 +146,25 @@ def convert(conversion: Conv_F, _trip: Iterable[Leg]) -> Iterator[float]:
     return (conversion(distance) for start, end, distance in _trip)
 
 
+def group_sort1(trip: Iterable[Leg]) -> Dict[int, int]:
+    def group(data: Iterable[T_]) -> Iterable[Tuple[T_, int]]:
+        previous, count = None, 0
+        for d in sorted(data):
+            if d == previous:
+                count += 1
+            elif previous is not None:
+                yield previous, count
+                previous, count = d, 1
+            elif previous is None:
+                previous, count = d, 1
+            else:
+                raise Exception("Bad bad design problem")
+        yield previous, count
+
+    quantized = (int(5 * (dist // 5)) for beg, end, dist in trip)
+    return dict(group(quantized))
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
@@ -182,4 +212,6 @@ if __name__ == "__main__":
     # quantized
     quantized = (5 * (dist // 5) for start, stop, dist in trip_tuple)
     quantized_counter = Counter(quantized)
-    keep_logger.info("%s", quantized_counter.most_common())
+    keep_logger.info("use counter: %s", quantized_counter.most_common())
+
+    keep_logger.info("use group_sort1: %s", group_sort1(trip_tuple))
