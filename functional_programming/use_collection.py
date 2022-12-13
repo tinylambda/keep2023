@@ -1,4 +1,5 @@
 import xml.etree.ElementTree
+from collections import Counter
 from math import radians, sqrt, sin, cos, asin
 from pathlib import Path
 from typing import TextIO, Text, List, Iterable, Tuple, Any, Iterator, TypeVar, Callable
@@ -177,3 +178,8 @@ if __name__ == "__main__":
         path = float_from_pair(lat_lon_kml(row_iter_kml(geo_file_obj)))
         trip3 = tuple(cons_distance3(haversine, legs(path)))
         keep_logger.info("trip3: %s", trip3)
+
+    # quantized
+    quantized = (5 * (dist // 5) for start, stop, dist in trip_tuple)
+    quantized_counter = Counter(quantized)
+    keep_logger.info("%s", quantized_counter.most_common())
