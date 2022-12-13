@@ -74,6 +74,27 @@ def mapg(f: Callable[[D_], R_], C: Iterable[D_]) -> Iterator[R_]:
         yield f(x)
 
 
+def prodrc(collection: Sequence[float]) -> float:
+    if len(collection) == 0:
+        return 1
+    return collection[0] * prodrc(collection[1:])
+
+
+def prodri(items: Iterator[float]) -> float:
+    try:
+        head = next(items)
+    except StopIteration:
+        return 1
+    return head * prodri(items)
+
+
+def prodi(items: Iterable[float]) -> float:
+    p = 1
+    for n in items:
+        p *= n
+    return p
+
+
 if __name__ == "__main__":
     keep_logger.info("%s", add(100, 20))
     # the following trigger RecursionError
@@ -107,3 +128,7 @@ if __name__ == "__main__":
         "list(mapg(lambda x: x * 10, range(10))): %s",
         list(mapg(lambda x: x * 10, range(10))),
     )
+
+    keep_logger.info("prodrc([1, 2, 3, 4]): %s", prodrc([1, 2, 3, 4]))
+    keep_logger.info("prodri(iter([1, 2, 3, 4])): %s", prodri(iter([1, 2, 3, 4])))
+    keep_logger.info("prodi([1, 2, 3, 4]): %s", prodi([1, 2, 3, 4]))
