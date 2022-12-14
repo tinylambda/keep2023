@@ -1,19 +1,22 @@
+# type: ignore
+
+
 import xml.etree.ElementTree
 from collections import Counter, defaultdict
-from math import radians, sqrt, sin, cos, asin
+from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 from typing import (
-    TextIO,
-    Text,
-    List,
-    Iterable,
-    Tuple,
     Any,
-    Iterator,
-    TypeVar,
     Callable,
     Dict,
+    Iterable,
+    Iterator,
+    List,
     Sequence,
+    Text,
+    TextIO,
+    Tuple,
+    TypeVar,
 )
 
 from base import keep_logger
@@ -122,16 +125,24 @@ def haversine(p1: Point, p2: Point, R: float = NM) -> float:
     return R * c
 
 
-def f_start(x):
-    return x[0]
+def f_start(s, e, d):
+    return s
 
 
-def f_end(x):
-    return x[1]
+def f_end(s, e, d):
+    return e
 
 
-def f_dist(x):
-    return x[2]
+def f_dist(s, e, d):
+    return d
+
+
+def f_latitude(lat, lon):
+    return lat
+
+
+def f_longitude(lat, lon):
+    return lon
 
 
 def to_miles(x):
@@ -195,6 +206,10 @@ def binned_distance(leg):
     return 5 * (leg[2] // 5)
 
 
+def sum_f(function: Callable[[Any], float], data: Iterable) -> float:
+    return sum(function(x) for x in data)
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
@@ -221,10 +236,10 @@ if __name__ == "__main__":
         keep_logger.info("long: %s, short: %s", long, short)
 
         keep_logger.info(
-            "trip_m: %s", list(map(to_miles, (f_dist(item) for item in trip_tuple)))
+            "trip_m: %s", list(map(to_miles, (f_dist(*item) for item in trip_tuple)))
         )
 
-        trip_long = list(filter(lambda leg: f_dist(leg) >= 50, trip_tuple))
+        trip_long = list(filter(lambda leg: f_dist(*leg) >= 50, trip_tuple))
         keep_logger.info("trip_long: %s", trip_long)
 
         keep_logger.info("convert: %s", list(convert(to_miles, trip_tuple)))
@@ -258,3 +273,12 @@ if __name__ == "__main__":
     for distance in sorted(by_distance):
         keep_logger.info("%s: %s", distance, by_distance[distance])
     keep_logger.info("partition ---->")
+
+    keep_logger.info("north most <----")
+    for distance in sorted(by_distance):
+        keep_logger.info(
+            "%s: %s",
+            distance,
+            max(by_distance[distance], key=lambda pt: f_latitude(*(f_start(*pt)))),
+        )
+    keep_logger.info("north most ---->")
