@@ -184,6 +184,13 @@ def group_by(key: Callable[[S_], K_], data: Sequence[S_]) -> Dict[K_, List[S_]]:
     return group_into(key, data, defaultdict(list))
 
 
+def partition(key: Callable[[S_], K_], data: Iterable[S_]) -> Dict[K_, List[S_]]:
+    dictionary: Dict[K_, List[S_]] = defaultdict(list)
+    for head in data:
+        dictionary[key(head)].append(head)
+    return dictionary
+
+
 def binned_distance(leg):
     return 5 * (leg[2] // 5)
 
@@ -244,3 +251,10 @@ if __name__ == "__main__":
     for distance in sorted(by_distance):
         keep_logger.info("%s: %s", distance, by_distance[distance])
     keep_logger.info("group_by ---->")
+
+    by_distance = partition(binned_distance, trip_tuple)
+
+    keep_logger.info("partition <----")
+    for distance in sorted(by_distance):
+        keep_logger.info("%s: %s", distance, by_distance[distance])
+    keep_logger.info("partition ---->")
