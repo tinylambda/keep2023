@@ -17,6 +17,8 @@ from typing import (
     TextIO,
     Tuple,
     TypeVar,
+    NamedTuple,
+    cast,
 )
 
 from base import keep_logger
@@ -41,7 +43,19 @@ Leg_D = Tuple[Point, Point, float]
 Leg_P_D = Tuple[Leg_Raw, ...]
 
 Conv_F = Callable[[float], float]
-Leg = Tuple[Any, Any, float]
+# Leg = Tuple[Any, Any, float]
+
+
+class Point(NamedTuple):
+    latitude: float
+    longitude: float
+
+
+class Leg(NamedTuple):
+    start: Point
+    end: Point
+    distance: float
+
 
 S_ = TypeVar("S_")
 K_ = TypeVar("K_")
@@ -109,6 +123,10 @@ def legs(lat_lon_iter: Iterator[T_]) -> Pairs_Iter:
 
 def float_from_pair(lat_lon_iter: Text_Iter) -> LL_Iter:
     return ((float(lat), float(lon)) for lat, lon in lat_lon_iter)
+
+
+def float_lat_lon(row_iter: Iterator[Tuple[str, ...]]) -> Iterator[Tuple[float, ...]]:
+    return (tuple(map(float, pick_lat_lon(*row))) for row in row_iter)
 
 
 def haversine(p1: Point, p2: Point, R: float = NM) -> float:
@@ -210,6 +228,17 @@ def sum_f(function: Callable[[Any], float], data: Iterable) -> float:
     return sum(function(x) for x in data)
 
 
+def get_trip(file_path: str) -> List[Leg]:
+    with open(file_path, "r") as source:
+        path_iter = float_lat_lon(row_iter_kml(cast(TextIO, source)))
+        pair_iter = legs(path_iter)
+        trip_iter = (
+            Leg(start, end, round(haversine(start, end), 4)) for start, end in pair_iter
+        )
+        trip = list(trip_iter)
+        return trip
+
+
 if __name__ == "__main__":
     geo_xml = Path(__file__).parent / "data" / "geo.xml"
     with open(geo_xml, "r") as geo_file_obj:
@@ -282,3 +311,10 @@ if __name__ == "__main__":
             max(by_distance[distance], key=lambda pt: f_latitude(*(f_start(*pt)))),
         )
     keep_logger.info("north most ---->")
+
+    first_leg = Leg(
+        Point(29.050501, -80.651169), Point(27.186001, -80.139503), 115.1751
+    )
+    keep_logger.info("use namedtuple: %s", first_leg.start.latitude)
+
+    keep_logger.info("%s", get_trip(geo_xml))
