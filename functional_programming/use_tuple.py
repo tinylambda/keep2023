@@ -14,6 +14,7 @@ from typing import (
     cast,
     NamedTuple,
     Dict,
+    Sequence,
 )
 
 T_ = TypeVar("T_")
@@ -25,6 +26,17 @@ RawPairIter = Iterable[Tuple[float, float]]
 class Pair(NamedTuple):
     x: float
     y: float
+
+
+class Ranked_Y(NamedTuple):
+    r_y: float
+    raw: Pair
+
+
+class Ranked_XY(NamedTuple):
+    r_x: float
+    r_y: float
+    raw: Pair
 
 
 RankedPair = Tuple[int, Pair]
@@ -64,8 +76,26 @@ def head_map_filter(row_iter: Iterator[List[Optional[Text]]]) -> Iterator[List[f
     return filter(all_numeric, map(float_row, row_iter))
 
 
-def rank_y(pairs: Iterable[Pair]) -> Iterator[RankedPair]:
-    return enumerate(sorted(pairs, key=lambda p: p.y))
+# def rank_y(pairs: Iterable[Pair]) -> Iterator[RankedPair]:
+#     return enumerate(sorted(pairs, key=lambda p: p.y))
+
+
+def rank_y(pairs: Iterable[Pair]) -> Iterable[Ranked_Y]:
+    return (Ranked_Y(rank, data) for rank, data in rank(pairs, lambda pair: pair.y))
+
+
+def rank_xy(pairs: Sequence[Pair]) -> Iterator[Ranked_XY]:
+    return (
+        Ranked_XY(r_x=r_x, r_y=rank_y_raw[0], raw=rank_y_raw[1])
+        for r_x, rank_y_raw in rank(rank_y(pairs), lambda r: r.raw.x)
+    )
+
+
+def rank_corr(pairs: Sequence[Pair]) -> float:
+    ranked = rank_xy(pairs)
+    sum_d_2 = sum((r.r_x - r.r_y) ** 2 for r in ranked)
+    n = len(pairs)
+    return 1 - 6 * sum_d_2 / (n * (n**2 - 1))
 
 
 def rank_x(ranked_pairs: Iterable[RankedPair]) -> Iterator[Rank2Pair]:
@@ -109,9 +139,14 @@ if __name__ == "__main__":
         series_3 = pairs(series(2, data))
         series_4 = pairs(series(3, data))
 
+        pprint.pprint(series_1)
+
         y_rank = list(rank_y(series_1))
         xy_rank = list(rank_y(series_1))
         pprint.pprint(xy_rank)
 
         sample_data = [0.8, 1.2, 1.2, 1.2, 1.2, 2.3, 18]
         pprint.pprint(list(rank(sample_data)))
+
+        pprint.pprint(list(rank_xy(series_1)))
+        pprint.pprint(rank_corr(series_1))
