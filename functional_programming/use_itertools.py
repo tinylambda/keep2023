@@ -1,8 +1,11 @@
+import csv
+import glob
 import operator
 import pprint
 import random
-from itertools import count, repeat, cycle, accumulate
-from typing import TypeVar, Callable, Iterator, Tuple
+from contextlib import ExitStack
+from itertools import count, repeat, cycle, accumulate, chain, groupby
+from typing import TypeVar, Callable, Iterator, Tuple, cast, TextIO, List
 
 _enumerate = lambda x, start=0: zip(count(start), x)
 
@@ -29,6 +32,15 @@ def until(terminate: Callable[[T_], bool], iterator: Iterator[T_]) -> T_:
 def randseq(limit):
     while True:
         yield random.randrange(limit)
+
+
+def readfiles(*filenames: str) -> Iterator[List[str]]:
+    with ExitStack() as stack:
+        files = [
+            stack.enter_context(cast(TextIO, open(name, "r"))) for name in filenames
+        ]
+        readers = map(lambda f: csv.reader(f, delimiter=","), files)
+        yield from chain(*readers)
 
 
 randomized = randseq(100)
@@ -65,3 +77,17 @@ if __name__ == "__main__":
 
     r = accumulate(data, operator.add, initial=10000)
     pprint.pprint(list(r))
+
+    filenames: List[str] = glob.glob("data/files/*.csv")
+    for item in readfiles(*filenames):
+        pprint.pprint(item)
+
+    data = [
+        {"g": "1", "name": "felix"},
+        {"g": "1", "name": "fanny"},
+        {"g": "2", "name": "tom"},
+        {"g": "2", "name": "jerry"},
+    ]
+    group_iter = groupby(data, key=lambda x: x["g"])
+    for k, items in group_iter:
+        print(k, ": ", list(items))
