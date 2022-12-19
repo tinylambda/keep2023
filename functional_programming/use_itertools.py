@@ -16,6 +16,7 @@ from itertools import (
     dropwhile,
     filterfalse,
     starmap,
+    tee,
 )
 from typing import TypeVar, Callable, Iterator, Tuple, cast, TextIO, List
 
@@ -53,6 +54,13 @@ def readfiles(*filenames: str) -> Iterator[List[str]]:
         ]
         readers = map(lambda f: csv.reader(f, delimiter=","), files)
         yield from chain(*readers)
+
+
+def mean(iterator: Iterator[float]) -> float:
+    it0, it1 = tee(iterator, 2)
+    N = sum(1 for x in it0)
+    s1 = sum(x for x in it1)
+    return s1 / N
 
 
 randomized = randseq(100)
@@ -141,3 +149,5 @@ if __name__ == "__main__":
     pprint.pprint("map/starmap: ")
     pprint.pprint(list(map(lambda x, y: x + y, (1, 2), (3, 4))))  # should be 4, 6
     pprint.pprint(list(starmap(lambda x, y: x + y, [(1, 2), (3, 4)])))  # should be 3, 7
+
+    pprint.pprint("mean: %s" % mean(x for x in range(10)))
