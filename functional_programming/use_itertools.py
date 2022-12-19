@@ -4,7 +4,19 @@ import operator
 import pprint
 import random
 from contextlib import ExitStack
-from itertools import count, repeat, cycle, accumulate, chain, groupby
+from itertools import (
+    count,
+    repeat,
+    cycle,
+    accumulate,
+    chain,
+    groupby,
+    compress,
+    islice,
+    dropwhile,
+    filterfalse,
+    starmap,
+)
 from typing import TypeVar, Callable, Iterator, Tuple, cast, TextIO, List
 
 _enumerate = lambda x, start=0: zip(count(start), x)
@@ -65,10 +77,18 @@ if __name__ == "__main__":
     pprint.pprint(r)
 
     data = range(20)
+    pprint.pprint("Choose:")
     pprint.pprint([v for v, pick in zip(data, choose(all)) if pick])
     pprint.pprint([v for v, pick in zip(data, choose(subset)) if pick])
     pprint.pprint([v for v, pick in zip(data, choose(randomized)) if pick])
 
+    pprint.pprint("Choose use compress:")
+    pprint.pprint(list(compress(data, choose(all))))
+    subset = cycle(range(100))
+    pprint.pprint(list(compress(data, choose(subset))))
+    pprint.pprint(list(compress(data, choose(randomized))))
+
+    pprint.pprint("Accumulate:")
     data = [1, 4, 5, 6, 4, 3, 5, 6, 7, 239, 12]
     pprint.pprint(data)
 
@@ -91,3 +111,33 @@ if __name__ == "__main__":
     group_iter = groupby(data, key=lambda x: x["g"])
     for k, items in group_iter:
         print(k, ": ", list(items))
+
+    pprint.pprint("islice: ")
+    data = [1, 4, 5, 6, 4, 3, 5, 6, 7, 239, 12]
+    pprint.pprint("data: %s" % data)
+    pprint.pprint(list(zip(data[0::2], data[1::2])))
+
+    pprint.pprint("islice islice:")
+    flat_iter1 = iter(data)
+    flat_iter2 = iter(data)
+    pprint.pprint(
+        list(zip(islice(flat_iter1, 0, None, 2), islice(flat_iter2, 1, None, 2)))
+    )
+
+    pprint.pprint("colors: ")
+    with open("data/crayola.gpl", "rt") as source:
+        rdr = csv.reader(cast(TextIO, source), delimiter="\t")
+        rows = dropwhile(lambda row: row[0] != "#", rdr)
+        # now rows contains the # row
+        color_rows = islice(rows, 1, None)
+        pprint.pprint(list(color_rows))
+
+    pprint.pprint("filter/filterfalse:")
+    data = [0, False, 1, 2]
+    pprint.pprint("data: %s" % data)
+    pprint.pprint("filter: %s" % list(filter(None, data)))
+    pprint.pprint("filterfalse: %s" % list(filterfalse(None, data)))
+
+    pprint.pprint("map/starmap: ")
+    pprint.pprint(list(map(lambda x, y: x + y, (1, 2), (3, 4))))  # should be 4, 6
+    pprint.pprint(list(starmap(lambda x, y: x + y, [(1, 2), (3, 4)])))  # should be 3, 7
