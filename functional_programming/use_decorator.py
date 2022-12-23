@@ -68,6 +68,11 @@ def currency(text: str, **kw) -> decimal.Decimal:
     return decimal.Decimal(text, **kw)
 
 
+m1: Callable[[float], float] = lambda x: x - 1
+p2: Callable[[float], float] = lambda y: 2**y
+mersenne: Callable[[float], float] = lambda x: m1(p2(x))
+
+
 if __name__ == "__main__":
     some_data = [10, 100, None, 50, 60]
     scaled = map(nlog, some_data)
